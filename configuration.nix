@@ -64,7 +64,7 @@
 
 
   # Set your time zone.
-  time.timeZone = "US/New_York";
+  time.timeZone = "America/New_York";
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
