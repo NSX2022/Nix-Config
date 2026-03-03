@@ -6,7 +6,7 @@
 
 
 {
-  #DESPERATE MEASURES
+  # BREAK GLASS IN CASE OF EMERGENCY
   # !!!!!!
   /*
   boot.loader.systemd-boot.graceful = true;
@@ -26,19 +26,25 @@
     }
   ];
 
+  hardware = {
+    bluetooth.enable = true;
+  };
+
   # Nvidia nonsense
   hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
   hardware.nvidia.modesetting.enable = true;
   hardware.graphics.enable = true;
   hardware.nvidia.open = false;
   hardware.graphics.enable32Bit = true;
-  hardware.nvidia.powerManagement.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
 
   # Hibernation
   boot.resumeDevice = "/dev/disk/by-uuid/5a88c772-6b56-436b-92c6-b635c61d4030";
   # Blacklist integrated GPU, set offset for swapon memory block
   boot.kernelParams = [ "module_blacklist=i915" "resume_offset=70340608" ];
+  # Might need to tinker with this
+  hardware.nvidia.powerManagement.enable = true;
+  # Hibernate when the lid is closed
   services.logind.settings.Login = {
     HandleLidSwitch = "hibernate";
     HandleLidSwitchExternalPower = "hibernate";
@@ -71,14 +77,24 @@
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
 
-  services.xserver = {
-    enable = true;
-    desktopManager = {
-      xterm.enable = false;
-      xfce.enable = true;
+  security.rtkit.enable = true;
+  services = {
+    xserver = {
+      enable = true;
+      desktopManager = {
+        xterm.enable = false;
+        xfce.enable = true;
+      };
+    };
+    displayManager.defaultSession = "xfce";
+    # Sound.
+    pipewire = {
+      alsa.enable = true;
+      alsa.support32Bit = true;
+      enable = true;
+      pulse.enable = true;
     };
   };
-  services.displayManager.defaultSession = "xfce";
   
 
   # Configure keymap in X11
@@ -87,12 +103,6 @@
 
   # Enable CUPS to print documents.
   # services.printing.enable = true;
-
-  # Sound.
-  services.pipewire = {
-    enable = true;
-    pulse.enable = true;
-  };
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.libinput.enable = true;
@@ -117,6 +127,7 @@
   environment.systemPackages = with pkgs; [
     # System
     blueman # For bluetooth
+    pavucontrol # Audio Input GUI
     # Utilities
     wget
     git
@@ -143,6 +154,7 @@
     vscode
     tor-browser
     vlc
+    gimp
     # Games
     rogue
     vintagestory
@@ -179,7 +191,7 @@
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
+  networking.firewall.allowedUDPPorts = [ 9090 ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
