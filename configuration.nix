@@ -50,7 +50,7 @@
     HandleLidSwitchExternalPower = "hibernate";
   };
 
-  # They fixed 6.18 :DDD
+  # Disable this and rollback to 6.18 if drivers are broken by the latest kernel version
   boot.kernelPackages = pkgs.linuxPackages_latest;
   
   imports =
@@ -110,9 +110,17 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.merlin = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "nordvpn"]; # Enable ‘sudo’ for the user.
     packages = with pkgs; [
-      tree
+      # Applications
+      
+      # Games
+      rogue
+      vintagestory
+      nethack
+      # Utilities
+      ollama-vulkan
+      
     ];
   };
   
@@ -129,6 +137,8 @@
     blueman # For bluetooth
     pavucontrol # Audio Input GUI
     # Utilities
+    tree
+    unzip
     wget
     git
     alacritty
@@ -155,10 +165,7 @@
     tor-browser
     vlc
     gimp
-    # Games
-    rogue
-    vintagestory
-    nethack
+    monero-gui
     # Programming
     javaPackages.compiler.openjdk8
     javaPackages.compiler.openjdk25
