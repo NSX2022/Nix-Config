@@ -145,10 +145,9 @@
     extraGroups = [ "wheel" "nordvpn"]; # Enable ‘sudo’ for the user.
     packages = with pkgs; [
       # Applications
-      (discord.override {
-        withVencord = true;
-      })
       vesktop
+      obs-studio
+      kdePackages.kdenlive
       protonmail-desktop
       protonvpn-gui
       libreoffice
