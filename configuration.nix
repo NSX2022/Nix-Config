@@ -40,18 +40,28 @@
 
   # Optimus drivers
   hardware.nvidia.prime = {
-    sync.enable = true;
+    offload = {
+      enable = true;
+      enableOffloadCmd = true;  # nvidia-offload wrapper
+    };
     intelBusId = "PCI:0:2:0";
     nvidiaBusId = "PCI:2:0:0";
   };
 
-  # Hibernation
+  # TODO Hibernation
   # boot.resumeDevice = "/dev/disk/by-uuid/5a88c772-6b56-436b-92c6-b635c61d4030";
   # Blacklist integrated GPU, set offset for swapon memory block
   # boot.kernelParams = [ "resume_offset=70340608" "nvidia-drm.modeset=1" ];
 
   #TEMPORARY
   boot.kernelParams = [ "nvidia-drm.modeset=1" ];
+
+  #backlight
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", \
+    RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/intel_backlight/brightness", \
+    RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
+  '';
 
   # Might need to tinker with this
   hardware.nvidia.powerManagement.enable = true;
@@ -135,7 +145,13 @@
     extraGroups = [ "wheel" "nordvpn"]; # Enable ‘sudo’ for the user.
     packages = with pkgs; [
       # Applications
-      
+      (discord.override {
+        withVencord = true;
+      })
+      vesktop
+      protonmail-desktop
+      protonvpn-gui
+      libreoffice
       # Games
       rogue
       nethack
@@ -146,10 +162,12 @@
   };
   
   programs.firefox.enable = true;
-  programs.steam = {
-    enable = true;
-    extraCompatPackages = with pkgs; [ proton-ge-bin ];
-  };
+  # For singlebooting
+  # programs.steam = {
+  #  enable = true;
+  #  extraCompatPackages = with pkgs; [ proton-ge-bin ];
+  # };
+
   
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
@@ -157,6 +175,7 @@
     # System
     blueman # For bluetooth
     pavucontrol # Audio Input GUI
+    brightnessctl # Display brightness
     # Utilities
     tree
     unzip
@@ -173,9 +192,6 @@
     emscripten
     pciutils
     # Applications
-    (discord.override {
-      withVencord = true;
-    })
     btop
     cmatrix
     jetbrains.idea-community
