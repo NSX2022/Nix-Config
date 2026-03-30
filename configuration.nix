@@ -16,18 +16,26 @@
   */
   # !!!!!!
 
+  # Environment variableds
+  environment.variables = {
+    
+  };
+
   # Why isn't this enabled by default
   nixpkgs.config.allowUnfree = true;
   
   swapDevices = [
     {
       device = "/swapfile";
-      size = 34 * 1024; # Make sure it's >= your RAM if you want hibernation
+      size = 33 * 1024; # Make sure it's >= your RAM if you want hibernation
     }
   ];
 
   hardware = {
-    bluetooth.enable = true;
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true;
+    };
   };
 
   # Nvidia nonsense
@@ -49,22 +57,25 @@
   };
 
   # TODO Hibernation
-  # boot.resumeDevice = "/dev/disk/by-uuid/5a88c772-6b56-436b-92c6-b635c61d4030";
+  boot.resumeDevice = "/dev/disk/by-uuid/6788e4df-13f9-4765-8468-f2cc4c8cbcb3";
   # Blacklist integrated GPU, set offset for swapon memory block
-  # boot.kernelParams = [ "resume_offset=70340608" "nvidia-drm.modeset=1" ];
-
-  #TEMPORARY
-  boot.kernelParams = [ "nvidia-drm.modeset=1" ];
+  boot.kernelParams = [ "nvidia-drm.modeset=1" "resume_offset=7030784"];
+  boot.initrd.kernelModules = [ "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
 
   #backlight
+  programs.light.enable = true; # uses video over udev rules
   services.udev.extraRules = ''
-    ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", \
+  ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="nvidia_0", \
+    RUN+="${pkgs.coreutils}/bin/chmod a-w /sys/class/backlight/nvidia_0/brightness"
+
+  ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", \
     RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/intel_backlight/brightness", \
     RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
   '';
 
   # Might need to tinker with this
   hardware.nvidia.powerManagement.enable = true;
+  hardware.nvidia.powerManagement.finegrained = true;
   # Hibernate when the lid is closed
   # services.logind.settings.Login = {
   #  HandleLidSwitch = "hibernate";
@@ -126,6 +137,8 @@
       enable = true;
       pulse.enable = true;
     };
+    # Bluetooth
+    blueman.enable = true;
   };
   
 
@@ -142,7 +155,7 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.merlin = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "nordvpn"]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "video"]; # Enable ‘sudo’ for the user.
     packages = with pkgs; [
       # Applications
       vesktop
@@ -154,9 +167,9 @@
       # Games
       rogue
       nethack
+      prismlauncher
       # Utilities
       ollama-vulkan
-      
     ];
   };
   
@@ -174,7 +187,6 @@
     # System
     blueman # For bluetooth
     pavucontrol # Audio Input GUI
-    brightnessctl # Display brightness
     # Utilities
     tree
     unzip
@@ -203,13 +215,17 @@
     gimp
     monero-gui
     # Programming
-    javaPackages.compiler.openjdk8
-    javaPackages.compiler.openjdk25
-    javaPackages.compiler.openjdk21
-    javaPackages.compiler.openjdk11
+    #TODO clean up java
+    openjdk8
+    openjdk25
+    openjdk21
+    openjdk11
+    javaPackages.compiler.temurin-bin.jdk-21 # for Intellij
+    pnpm_9
+    nodejs_24
+    #TODO install pip_3.15 once that is released on nixpkgs
     cargo
     zig
-    chromium
     python315
     cmake
     gnumake
@@ -217,6 +233,11 @@
     typescript
     # xfce
     xfce.xfce4-cpugraph-plugin
+    xfe # file manager
+    # Fonts
+    minecraftia
+    unifont
+    
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
