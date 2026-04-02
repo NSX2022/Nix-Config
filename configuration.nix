@@ -57,10 +57,13 @@
   };
 
   # TODO Hibernation
-  boot.resumeDevice = "/dev/disk/by-uuid/6788e4df-13f9-4765-8468-f2cc4c8cbcb3";
-  # Blacklist integrated GPU, set offset for swapon memory block
-  boot.kernelParams = [ "nvidia-drm.modeset=1" "resume_offset=7030784"];
-  boot.initrd.kernelModules = [ "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
+  boot.kernelParams = [ 
+    "nvidia-drm.modeset=1"
+    "resume=UUID=6788e4df-13f9-4765-8468-f2cc4c8cbcb3"
+    "nvme_core.default_ps_max_latency_us=0"
+  ];
+  boot.initrd.kernelModules = [];
+  boot.initrd.systemd.enable = true;
 
   #backlight
   programs.light.enable = true; # uses video over udev rules
@@ -75,7 +78,7 @@
 
   # Might need to tinker with this
   hardware.nvidia.powerManagement.enable = true;
-  hardware.nvidia.powerManagement.finegrained = true;
+  hardware.nvidia.powerManagement.finegrained = false;
   # Hibernate when the lid is closed
   # services.logind.settings.Login = {
   #  HandleLidSwitch = "hibernate";
@@ -164,6 +167,7 @@
       protonmail-desktop
       protonvpn-gui
       libreoffice
+      brave # For things that need a chromium browser
       # Games
       rogue
       nethack
@@ -202,6 +206,7 @@
     docker
     emscripten
     pciutils
+    dwarfs # Compression algorithm
     # Applications
     btop
     cmatrix
