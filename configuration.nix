@@ -59,7 +59,6 @@
   # TODO Hibernation
   boot.kernelParams = [ 
     "nvidia-drm.modeset=1"
-    "resume=UUID=6788e4df-13f9-4765-8468-f2cc4c8cbcb3"
     "nvme_core.default_ps_max_latency_us=0"
   ];
   boot.initrd.kernelModules = [];
