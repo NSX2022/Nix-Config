@@ -18,7 +18,8 @@
 
   # Environment variableds
   environment.variables = {
-    
+    CLASSPATH = let lib = "/home/merlin/Uni/CS210/lib/lib"; in
+      ".:./out:${lib}/stdlib.jar:${lib}/dsa.jar"; # CS210 libraries
   };
 
   # Why isn't this enabled by default
@@ -45,6 +46,7 @@
   hardware.nvidia.open = true;
   hardware.graphics.enable32Bit = true;
   services.xserver.videoDrivers = [ "nvidia" ];
+  hardware.nvidia-container-toolkit.enable = true;  # for ollama-docker
 
   # Optimus drivers
   hardware.nvidia.prime = {
@@ -157,7 +159,7 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.merlin = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "video"]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "video" "docker" ]; # wheel = Enable ‘sudo’ for the user, video = enable display setting manipulation, docker to run containers !!!ROOTFUL!!!
     packages = with pkgs; [
       # Applications
       vesktop
@@ -171,8 +173,9 @@
       rogue
       nethack
       prismlauncher
+      vms-empire
       # Utilities
-      ollama-vulkan
+      ollama
     ];
   };
   
@@ -202,10 +205,14 @@
     yt-dlp
     vulkan-tools
     speedtest-cli
-    docker
     emscripten
     pciutils
     dwarfs # Compression algorithm
+    nvd # Nix Version Difference
+    retry # Try a command until it succeeds (use sparingly)
+    viddy # watch command for automation
+    pyenv # TODO: declaritive configuration?
+    wine
     # Applications
     btop
     cmatrix
@@ -231,17 +238,28 @@
     cargo
     zig
     python315
+    python313
     cmake
     gnumake
     gcc
     typescript
+    llvm
+    llvm.dev
+    clang
+    nasm
+    lua
+    # Libraries
+    ncurses
+    raylib
+    python313Packages.pyautogui
     # xfce
     xfce.xfce4-cpugraph-plugin
     xfe # file manager
     # Fonts
     minecraftia
     unifont
-    
+    # Nvidia
+    nvidia-container-toolkit
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -253,12 +271,23 @@
   # };
 
   # List services that you want to enable:
+  virtualisation.docker = {
+    enable = true;
+    daemon.settings = {
+      runtimes = {
+        nvidia = {
+          path = "${pkgs.nvidia-container-toolkit.tools}/bin/nvidia-container-runtime";
+          runtimeArgs = [];
+        };
+      };
+    };
+  };
 
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
+  networking.firewall.allowedTCPPorts = [  ];
   networking.firewall.allowedUDPPorts = [ 9090 ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
