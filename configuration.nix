@@ -58,7 +58,6 @@
     nvidiaBusId = "PCI:2:0:0";
   };
 
-  # TODO Hibernation
   boot.kernelParams = [ 
     "nvidia-drm.modeset=1"
     "nvme_core.default_ps_max_latency_us=0"
@@ -97,8 +96,10 @@
 
   # Use the systemd-boot EFI boot loader
   # boot.loader.systemd-boot.enable = true;
+
   boot.loader.efi.canTouchEfiVariables = true;
   # Use GRUB, autodetect other bootable media
+  boot.loader.grub.efiInstallAsRemovable = false;
   boot.loader.grub = {
     enable = true;
     useOSProber = true;
@@ -169,6 +170,8 @@
       protonvpn-gui
       libreoffice
       brave # For things that need a chromium browser
+      godot
+      unityhub
       # Games
       rogue
       nethack
@@ -176,6 +179,8 @@
       vms-empire
       # Utilities
       ollama
+      wireshark
+      # TODO do the NordVPN workaround
     ];
   };
   
@@ -196,6 +201,7 @@
     # Utilities
     tree
     unzip
+    p7zip # Unzip .7z files
     wget
     git
     alacritty
@@ -213,10 +219,16 @@
     viddy # watch command for automation
     pyenv # TODO: declaritive configuration?
     wine
+    efibootmgr
+    #winboat # TODO Package install for Winboat is broken? Prevents full build
+    grub2_efi
+    parted
+    file
+    testdisk
     # Applications
     btop
     cmatrix
-    jetbrains.idea-community
+    jetbrains.idea
     qbittorrent
     vim
     obsidian
@@ -248,6 +260,7 @@
     clang
     nasm
     lua
+    yarn # js build tools
     # Libraries
     ncurses
     raylib
@@ -255,11 +268,23 @@
     # xfce
     xfce.xfce4-cpugraph-plugin
     xfe # file manager
-    # Fonts
-    minecraftia
-    unifont
     # Nvidia
     nvidia-container-toolkit
+  ];
+
+  fonts.fontDir.enable = true;
+  
+  fonts.packages = with pkgs; [
+    minecraftia
+    unifont
+    liberation_ttf
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
+    open-sans
+    dejavu_fonts
+    freefont_ttf
+    font-awesome
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -273,6 +298,7 @@
   # List services that you want to enable:
   virtualisation.docker = {
     enable = true;
+    package = pkgs.docker_29;  # add this line
     daemon.settings = {
       runtimes = {
         nvidia = {
