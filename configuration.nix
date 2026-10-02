@@ -4,23 +4,14 @@
 
 { config, lib, pkgs, ... }:
 
-
 {
-  # BREAK GLASS IN CASE OF EMERGENCY
-  # !!!!!!
-  /*
-  boot.loader.systemd-boot.graceful = true;
-  systemd.package = pkgs.systemd.overrideAttrs (old: {
-    version = "257.6";
-  });
-  */
-  # !!!!!!
-
   # Environment variableds
   environment.variables = {
-    CLASSPATH = let lib = "/home/merlin/Uni/CS210/lib/lib"; in
-      ".:./out:${lib}/stdlib.jar:${lib}/dsa.jar"; # CS210 libraries
+    #CLASSPATH = let lib = "/home/merlin/Uni/CS210/lib/lib"; in
+    #  ".:./out:${lib}/stdlib.jar:${lib}/dsa.jar"; # CS210 libraries
   };
+
+  nix.settings.extra-experimental-features = [ "nix-command" "flakes" ];
 
   # Why isn't this enabled by default
   nixpkgs.config.allowUnfree = true;
@@ -39,59 +30,17 @@
     };
   };
 
-  # Nvidia nonsense
-  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.beta;
-  hardware.nvidia.modesetting.enable = true;
-  hardware.graphics.enable = true;
-  hardware.nvidia.open = true;
-  hardware.graphics.enable32Bit = true;
-  services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.nvidia-container-toolkit.enable = true;  # for ollama-docker
-
-  # Optimus drivers
-  hardware.nvidia.prime = {
-    offload = {
-      enable = true;
-      enableOffloadCmd = true;  # nvidia-offload wrapper
-    };
-    intelBusId = "PCI:0:2:0";
-    nvidiaBusId = "PCI:2:0:0";
-  };
-
-  boot.kernelParams = [ 
-    "nvidia-drm.modeset=1"
-    "nvme_core.default_ps_max_latency_us=0"
-  ];
-  boot.initrd.kernelModules = [];
-  boot.initrd.systemd.enable = true;
-
-  #backlight
-  programs.light.enable = true; # uses video over udev rules
-  services.udev.extraRules = ''
-  ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="nvidia_0", \
-    RUN+="${pkgs.coreutils}/bin/chmod a-w /sys/class/backlight/nvidia_0/brightness"
-
-  ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", \
-    RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/intel_backlight/brightness", \
-    RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/intel_backlight/brightness"
-  '';
-
-  # Might need to tinker with this
-  hardware.nvidia.powerManagement.enable = true;
-  hardware.nvidia.powerManagement.finegrained = false;
-  # Hibernate when the lid is closed
-  # services.logind.settings.Login = {
-  #  HandleLidSwitch = "hibernate";
-  #  HandleLidSwitchExternalPower = "hibernate";
-  # };
-
   # Disable this and rollback to 6.18 if wifi drivers are broken by the latest kernel version. If Nvidia drivers are broken, change to kernel 6.12
   # boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.kernelPackages = pkgs.linuxPackages_6_12;
   
   imports =
-    [ # Include the results of the hardware scan.
+    [
       ./hardware-configuration.nix
+      ./hotfixes.nix
+      ./vscode.nix
+      ./fonts.nix
+      ./battery.nix
     ];
 
   # Use the systemd-boot EFI boot loader
@@ -158,6 +107,7 @@
   # services.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
+  nix.settings.trusted-users = [ "root" "@wheel" ];
   users.users.merlin = {
     isNormalUser = true;
     extraGroups = [ "wheel" "video" "docker" ]; # wheel = Enable ‘sudo’ for the user, video = enable display setting manipulation, docker to run containers !!!ROOTFUL!!!
@@ -170,7 +120,7 @@
       protonvpn-gui
       libreoffice
       brave # For things that need a chromium browser
-      godot
+      godot-mono #TODO: Update manually when new versions come out
       unityhub
       # Games
       rogue
@@ -178,9 +128,12 @@
       prismlauncher
       vms-empire
       # Utilities
-      ollama
+      #ollama
       wireshark
       # TODO do the NordVPN workaround
+      godot
+      bespokesynth
+      qdirstat
     ];
   };
   
@@ -198,6 +151,8 @@
     # System
     blueman # For bluetooth
     pavucontrol # Audio Input GUI
+    libsecret
+    brightnessctl
     # Utilities
     tree
     unzip
@@ -217,7 +172,6 @@
     nvd # Nix Version Difference
     retry # Try a command until it succeeds (use sparingly)
     viddy # watch command for automation
-    pyenv # TODO: declaritive configuration?
     wine
     efibootmgr
     #winboat # TODO Package install for Winboat is broken? Prevents full build
@@ -225,17 +179,19 @@
     parted
     file
     testdisk
+    lsof # Check what process is using a port
     # Applications
     btop
     cmatrix
     jetbrains.idea
+    jetbrains.webstorm
     qbittorrent
     vim
     obsidian
-    vscode
     tor-browser
     vlc
     gimp
+    aseprite
     monero-gui
     # Programming
     #TODO clean up java
@@ -244,13 +200,14 @@
     openjdk21
     openjdk11
     javaPackages.compiler.temurin-bin.jdk-21 # for Intellij
-    pnpm_9
+    pnpm
     nodejs_24
     #TODO install pip_3.15 once that is released on nixpkgs
     cargo
     zig
     python315
     python313
+    uv
     cmake
     gnumake
     gcc
@@ -261,6 +218,7 @@
     nasm
     lua
     yarn # js build tools
+    dotnet-sdk
     # Libraries
     ncurses
     raylib
@@ -272,20 +230,12 @@
     nvidia-container-toolkit
   ];
 
-  fonts.fontDir.enable = true;
-  
-  fonts.packages = with pkgs; [
-    minecraftia
-    unifont
-    liberation_ttf
-    noto-fonts
-    noto-fonts-cjk-sans
-    noto-fonts-color-emoji
-    open-sans
-    dejavu_fonts
-    freefont_ttf
-    font-awesome
-  ];
+  #TODO: Move to shell .nix file
+  environment.interactiveShellInit = ''
+    alias update='~/Scripts/nix_update.sh';
+    alias comfyui='nix run github:utensils/comfyui-nix#cuda -- --fast-disk --use-sage-attention --enable-manager --cuda-malloc';
+    alias scode='sudo -E code --no-sandbox --user-data-dir /root/.vscode-root';
+  '';
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -298,7 +248,7 @@
   # List services that you want to enable:
   virtualisation.docker = {
     enable = true;
-    package = pkgs.docker_29;  # add this line
+    package = pkgs.docker_29;
     daemon.settings = {
       runtimes = {
         nvidia = {
@@ -308,6 +258,16 @@
       };
     };
   };
+
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-cuda;
+  };
+
+  #Security
+  services.gnome.gnome-keyring.enable = true;
+  programs.seahorse.enable = true; #GUI for security troubleshooting
+  security.pam.services.lightdm.enableGnomeKeyring = true; #Delete this when switching to KDE
 
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
@@ -325,7 +285,7 @@
   
   # Do NOT change this value 
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "25.11"; # Did you read the comment?
+  system.stateVersion = "25.11";
 
 }
 

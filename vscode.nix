@@ -3,6 +3,9 @@ let
   dotnet-full =
     with pkgs.dotnetCorePackages;
     combinePackages [
+      sdk_8_0
+      runtime_8_0
+      aspnetcore_8_0
       sdk_9_0
       runtime_9_0
       aspnetcore_9_0
@@ -74,6 +77,12 @@ let
       version = "1.28.0";
       sha256 = "sha256-+mZEYMrRwjsDXCHzNzYHFO+lhDSmpuL4D4uQAS+71v8=";
     }
+    {
+      name = "vscode-avalonia";
+      publisher = "AvaloniaTeam";
+      version = "12.3.1";
+      sha256 = "sha256-UzOLSDBB4gAo/YVckcYqesDNdgmgGwUsVueTD6RTWvw=";
+    }
   ];
 in
 {
@@ -103,6 +112,10 @@ in
       donjayamanne.githistory
       ms-vscode.hexeditor
       rust-lang.rust-analyzer
+      geequlim.godot-tools
+      jnoortheen.nix-ide
+      dbaeumer.vscode-eslint
+      
     ]) ++ (map (ext: pkgs.vscode-utils.extensionFromVscodeMarketplace ext) marketplaceExtensions);
   };
 }
