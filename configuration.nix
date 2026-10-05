@@ -117,7 +117,7 @@
       obs-studio
       kdePackages.kdenlive
       protonmail-desktop
-      protonvpn-gui
+      proton-vpn
       libreoffice
       brave # For things that need a chromium browser
       godot-mono #TODO: Update manually when new versions come out
