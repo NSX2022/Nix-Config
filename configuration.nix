@@ -32,7 +32,7 @@
 
   # Disable this and rollback to 6.18 if wifi drivers are broken by the latest kernel version. If Nvidia drivers are broken, change to kernel 6.12
   # boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelPackages = pkgs.linuxPackages_6_12;
+  boot.kernelPackages = pkgs.linuxPackages_6_18;
   
   imports =
     [
@@ -70,20 +70,16 @@
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
-
   security.rtkit.enable = true;
   services = {
-    xserver = {
-      enable = true;
-      desktopManager = {
-        xterm.enable = false;
-        xfce.enable = true;
-      };
-      displayManager.lightdm = {
+    desktopManager.plasma6.enable = true;
+    displayManager = {
+      sddm = {
         enable = true;
+        wayland.enable = true;
       };
+      defaultSession = "plasma";
     };
-    displayManager.defaultSession = "xfce";
     # Sound.
     pipewire = {
       alsa.enable = true;
@@ -91,9 +87,12 @@
       enable = true;
       pulse.enable = true;
     };
-    # Bluetooth
-    blueman.enable = true;
+    # Bluetooth is covered by KDE Plasma (bluedevil)
+    #blueman.enable = true;
   };
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+  # Disable KDEs power management
+  services.power-profiles-daemon.enable = false;
   
 
   # Configure keymap in X11
@@ -134,6 +133,7 @@
       godot
       bespokesynth
       qdirstat
+      opencode # Muh agents
     ];
   };
   
@@ -149,7 +149,6 @@
   # You can use https://search.nixos.org/ to find more packages (and options).
   environment.systemPackages = with pkgs; [
     # System
-    blueman # For bluetooth
     pavucontrol # Audio Input GUI
     libsecret
     brightnessctl
@@ -174,6 +173,7 @@
     viddy # watch command for automation
     wine
     efibootmgr
+    jq
     #winboat # TODO Package install for Winboat is broken? Prevents full build
     grub2_efi
     parted
@@ -223,9 +223,6 @@
     ncurses
     raylib
     python313Packages.pyautogui
-    # xfce
-    xfce.xfce4-cpugraph-plugin
-    xfe # file manager
     # Nvidia
     nvidia-container-toolkit
   ];
@@ -262,13 +259,13 @@
   services.ollama = {
     enable = true;
     package = pkgs.ollama-cuda;
+    environmentVariables = {
+      OLLAMA_CONTEXT_LENGTH = "65536";
+    };
   };
 
   #Security
-  services.gnome.gnome-keyring.enable = true;
-  programs.seahorse.enable = true; #GUI for security troubleshooting
-  security.pam.services.lightdm.enableGnomeKeyring = true; #Delete this when switching to KDE
-
+  security.pam.services.sddm.kwallet.enable = true;
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
 
