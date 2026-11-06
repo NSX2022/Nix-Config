@@ -127,9 +127,8 @@
       prismlauncher
       vms-empire
       # Utilities
-      #ollama
       wireshark
-      # TODO do the NordVPN workaround
+      # TODO explore wnord for vpn
       godot
       bespokesynth
       qdirstat
@@ -255,6 +254,14 @@
       };
     };
   };
+
+  #TODO: move to kde.nix file
+  environment.plasma6.excludePackages = with pkgs.kdePackages; [
+    kate      #also removes KWrite
+    konsole
+    elisa
+    ark
+  ];
 
   services.ollama = {
     enable = true;
