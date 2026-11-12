@@ -118,7 +118,7 @@
       protonmail-desktop
       proton-vpn
       libreoffice
-      brave # For things that need a chromium browser
+      #brave # For things that need a chromium browser # removed due to lack of maintenance
       godot-mono #TODO: Update manually when new versions come out
       unityhub
       # Games
