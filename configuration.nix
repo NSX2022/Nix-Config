@@ -133,6 +133,7 @@
       bespokesynth
       qdirstat
       opencode # Muh agents
+      pdf4qt # pdf editor
     ];
   };
   
